@@ -30,6 +30,7 @@
 # webhook.execute()
 import conf
 import discord
+from discord.ext import commands
 
 # Настраиваем расширенный доступ Intents
 intense = discord.Intents.default()
@@ -58,14 +59,18 @@ async def on_message(message):
         #Ответ пользователю в формате "Hello, {user.name} - your message {user.content}"
         msg = None
         #Отправляем сообщение в канал channel используя метод send
-        # 6. /get_сhannels  - список всех каналов категории Ботсы по "1. name id" *(через webhook)
-        # 7. /goto {id/name} - подключение бота в определенный канал (по умолчанию бот подключен в свой канал)
         # 1. /hello - просто сообщения
-        ctx = message.content.split(" ", maxsplit = 1)
-        if message.content == "/hello":
-            msg = f'Hello, {message.author.name}. I am {client.user.name}'
+        bot = commands.Bot(command_prefix = "!")
+        # args - tuple
+        @bot.command(name = "hello")
+        async def command_hello(ctx, *args):
+        #Переводим список в строку разделенными пробелами
+            message = " ".join(args)
+            if ctx.channel.id == 825309137751244801:
+                msg = f'Salam! Dont cry {message}'
+                await ctx.channel.send(msg)
         # 2. /about_me - сообщение пользователя по его параметрам id/name (если есть ник то добавить "твой ник nick")
-        elif message.content == "/about_me":
+        @bot.command(name = "about_me")
             msg = f'Your id is {message.author.id}'
             if message.author.nick:
                 msg = f'and your nick is {message.author.nick}'
@@ -73,21 +78,35 @@ async def on_message(message):
         elif ctx[0] == "/repeat":
             msg = ctx[1]
         # 4. /get_member {id/name} - берём инфу по пользователю по типу about_me {если пусто != обрабатываем ошибку}
-        elif message.content == "/get_member" and ({client.user.name} or {client.user.id}):
-            msg = f"User's name is {client.user.name}"  
-        if message.author.nick:
-            msg = f"and Users's nick is {client.user.id}"
-        elif message.content == "/get_member" and " ":
-            msg = f"Enter User's name is {client.user.name}"
+        elif ctx[0] == "/get_member":
+            name = ctx[1]
+            for idx, member in list(enumerate(message.author.guild.members)):
+                if name == member.name or name == member.id:
+                    msg = f'His username is {member.name} {f"and his nick is {member.nick}" if member.nick else ""} and his id is {member.id}' 
+            if name == "":
+                msg = f'There is no one who has that id or name'
         # 5. /get_members  - список всех пользователй по "1. name {nick} id" *(через webhook)
         elif message.content == "/get_members":
             if message.author.guild.name == "Bots":
                 msg = ""
                 for idx, member in list(enumerate(message.author.guild.members)):
                     msg += f'{idx+1}. {member.name} { f"[{member.nick}]"  if member.nick else "" } - {member.id}\n'
-
-
-        
+        # 6. /get_сhannels  - список всех каналов категории Ботсы по "1. name id" *(через webhook)
+        elif message.content == "/get_channels":
+            msg = ""
+            if message.author.guild.name == "Bots":
+                for idx, channel in list(enumerate(message.author.guild.channels)):
+                    msg += f'{idx+1}. {channel.name} - {channel.id}\n'
+        # 7. /goto {id/name} - подключение бота в определенный канал (по умолчанию бот подключен в свой канал)
+        elif ctx[0] == "/goto":
+            namechannel = ctx[1]
+            for idx, channel in list(enumerate(message.author.guild.channels)):
+                if namechannel == channel.name or int(namechannel) == channel.id:
+                    message.channel.id = namechannel
+                    msg = f"Channel is changed"
+                    break
+                else: 
+                    msg = f"channel doesn't found"
         #Отправляем сообщение если оно есть
         if msg != None:
             await message.channel.send(msg)
@@ -95,11 +114,23 @@ async def on_message(message):
 
 
 
-    
-
-
-
 
 client.run(conf.bot_token)
 
 
+
+
+bot = commands.Bot(command_prefix = "!")
+
+# args - tuple
+@bot.command(name = "about_me")
+async def command_hello(ctx, *args):
+    #Переводим список в строку разделенными пробелами
+    message = " ".join(args)
+    if ctx.channel.id == 825309137751244801:
+        msg = f'Salam! {ctx.user.id}'
+        await ctx.channel.send(msg)
+
+
+
+bot.run(conf.bot_token)
